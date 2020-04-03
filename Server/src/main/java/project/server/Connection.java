@@ -9,6 +9,11 @@ package project.server;
  *
  * @author Juan Javier
  */
-public class Connection {
+public class Connection implements Runnable{
+
+    @Override
+    public void run() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
     
 }

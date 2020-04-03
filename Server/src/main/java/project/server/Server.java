@@ -5,10 +5,26 @@
  */
 package project.server;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+
 /**
  *
  * @author Juan Javier
  */
 public class Server {
+    public static Proxy proxy = new Proxy();
     
+    public static void main(String[] args) throws IOException{
+        
+        Thread proxyThread = new Thread(proxy);
+        
+        proxyThread.start();
+        
+        
+        while(true){
+            ServerSocket server = new ServerSocket();
+        }
+        
+    }
 }
