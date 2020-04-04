@@ -5,9 +5,7 @@
  */
 package serversync;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 /**
  *
@@ -31,11 +29,11 @@ public class DataHolder {
         return connectionList.containsKey(user);
     }
     
-    public static boolean AddMessagesToQueue(String user, String message)
+    public static boolean AddMessagesToQueue(String user, String message, String id)
     {
         if(IsUserConnected(user))
         {
-            connectionList.get(user).AddMessageToQueue(message);
+            connectionList.get(user).AddMessage(message, id);
             return true;
         }else{
             return false;
