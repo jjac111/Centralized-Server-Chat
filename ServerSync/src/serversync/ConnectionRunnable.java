@@ -5,17 +5,14 @@
  */
 package serversync;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,7 +27,7 @@ public class ConnectionRunnable implements Runnable {
         TO_SERVER, TO_CLIENT
     };
     ConnectionStatus status = ConnectionStatus.TO_SERVER;
-    private List<String> messageQueue = new ArrayList<>();
+    private String message = "";
     private String id = null;
     private int port = 0;
     private InetAddress ip = null;
@@ -80,9 +77,11 @@ public class ConnectionRunnable implements Runnable {
                         case "connect":
                             System.out.println("Attempting to connect client with: " + command[1]);
                             if (DataHolder.IsUserConnected(command[1])) {
-                                toReturn = "Connected to user " + command[1];
                                 userToSend = command[1];
                                 status = ConnectionStatus.TO_CLIENT;
+                                DataHolder.AddMessagesToQueue(command[1], recieved, id);
+                                
+                                
                             } else {
                                 toReturn = "No user called " + command[1] + " is currently connected";
                             }
@@ -94,41 +93,34 @@ public class ConnectionRunnable implements Runnable {
                             break;
                     }
                 } else {
-                    if(recieved.equals("disconnect"))
-                    {
+                    
+                    if (recieved.equals("disconnect")) {
                         toReturn = "Disconnecting from client: " + userToSend + ". Connecting back to Server";
                         status = ConnectionStatus.TO_SERVER;
                         userToSend = null;
-                    }
-                    else if (DataHolder.AddMessagesToQueue(userToSend, id + ": " +recieved)) {
-                        toReturn = "Message sent correctly";
+                    } else if (DataHolder.AddMessagesToQueue(userToSend, id + ": " + recieved, id)) {
+                        //toReturn = "Message sent correctly";
                     } else {
-                        toReturn = "Message could not be sent because user was not connected";
+                        //toReturn = "Message could not be sent because user was not connected";
                     }
                 }
                 System.out.println(toReturn);
-                if(messageQueue.isEmpty())
-                {
+                if (status == ConnectionStatus.TO_CLIENT) {
                     output.writeUTF(toReturn);
-                }else{
-                    output.writeUTF(messageQueue.toString() +" - " + toReturn);
+                    
+                } else {
+                    output.writeUTF(message);
+                    message = "";
                 }
             } catch (IOException ex) {
-                Logger.getLogger(ConnectionRunnable.class.getName()).log(Level.SEVERE, null, ex);
+                //Logger.getLogger(ConnectionRunnable.class.getName()).log(Level.SEVERE, null, ex);
+                System.err.println("Lost connection with client: " + this.toString() + ", terminating thread and removing from connected list");
+                if (id != null) {
+                    DataHolder.RemoveConnection(id);
+                }
+                isConnected = false;
             }
         }
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public InetAddress getIp() {
-        return ip;
     }
 
     @Override
@@ -136,8 +128,10 @@ public class ConnectionRunnable implements Runnable {
         return "Client{" + "id=" + id + ", port=" + port + ", ip=" + ip + '}';
     }
 
-    public void AddMessageToQueue(String message) {
-        messageQueue.add(message);
+    public void AddMessage(String message, String user) {
+        this.status = ConnectionStatus.TO_CLIENT;
+        this.userToSend = user;
+        this.message = message;
     }
 
 }
