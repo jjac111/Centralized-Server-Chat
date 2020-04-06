@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package serversync;
+package src.serversync;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -52,24 +52,41 @@ public class ConnectionRunnable implements Runnable {
         String recieved;
         String toReturn;
         try {
-            output.writeUTF("CONNECTION STABLISHED");
+            output.writeUTF("CONNECTION STABLISHED" );
             id = input.readUTF();
-            System.out.println("Assigning id:  " + id);
+
+            System.out.println("\nNew Thread Assigning id:  " + id);
             DataHolder.AddConnection(id, this);
             System.out.println(DataHolder.ListConnections());
             output.writeUTF(DataHolder.ListConnections());
+
         } catch (IOException ex) {
             Logger.getLogger(ConnectionRunnable.class.getName()).log(Level.SEVERE, null, ex);
         }
 
+        // to know the number of runs
+        int count = 1;
+
         while (isConnected) {
+            // msgs to test
+            System.out.println( "\nThread " + id + " run: " + count);
+            System.out.println("ESTADO: " + this.status);
+
             toReturn = "EMPTY_MESSAGE";
 
             try {
                 recieved = input.readUTF();
+                String[] command = recieved.split(" "); // cambie el puesto de command
+                System.out.println("\nCOMANDOS thread " + id + " run: " + count);
+                for( String c: command){
+                    System.out.println(c);
+                }
                 if (status == ConnectionStatus.TO_SERVER) {
-                    System.out.println(recieved);
-                    String[] command = recieved.split(" ");
+                    //System.out.println(recieved);
+
+                    // msg test
+                    System.out.println("TO_SERVER");
+
                     switch (command[0]) {
                         case "list":
                             toReturn = DataHolder.ListConnections();
@@ -80,6 +97,11 @@ public class ConnectionRunnable implements Runnable {
                                 userToSend = command[1];
                                 status = ConnectionStatus.TO_CLIENT;
                                 DataHolder.AddMessagesToQueue(command[1], recieved, id);
+
+                                // msg to test
+                                System.out.println("Mensaje enviado a cliente " + command[1] + " " + recieved );
+
+                                /// aqui iria el wait, pero cuando llama a data holder
                                 
                                 
                             } else {
@@ -93,25 +115,39 @@ public class ConnectionRunnable implements Runnable {
                             break;
                     }
                 } else {
-                    
+
+                    // msg test
+                    System.out.println("TO_CLIENT");
+
                     if (recieved.equals("disconnect")) {
                         toReturn = "Disconnecting from client: " + userToSend + ". Connecting back to Server";
                         status = ConnectionStatus.TO_SERVER;
                         userToSend = null;
                     } else if (DataHolder.AddMessagesToQueue(userToSend, id + ": " + recieved, id)) {
                         //toReturn = "Message sent correctly";
+                        toReturn = message;
+
+                        // msg to test
+                        System.out.println("Mensaje enviado a cliente " + userToSend + " " + recieved );
+
                     } else {
                         //toReturn = "Message could not be sent because user was not connected";
                     }
                 }
-                System.out.println(toReturn);
+                System.out.println("To return: " + toReturn);
+                output.writeUTF(toReturn);
+
+                /* NO ES NECESARIO, ESTO ESTA DE MAS
                 if (status == ConnectionStatus.TO_CLIENT) {
+                    toReturn = message;
                     output.writeUTF(toReturn);
                     
                 } else {
                     output.writeUTF(message);
                     message = "";
                 }
+                */
+
             } catch (IOException ex) {
                 //Logger.getLogger(ConnectionRunnable.class.getName()).log(Level.SEVERE, null, ex);
                 System.err.println("Lost connection with client: " + this.toString() + ", terminating thread and removing from connected list");
@@ -120,6 +156,8 @@ public class ConnectionRunnable implements Runnable {
                 }
                 isConnected = false;
             }
+
+            count++;
         }
     }
 
