@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package src.serversync;
+package serversync;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -33,7 +33,8 @@ public class ConnectionRunnable implements Runnable {
     private InetAddress ip = null;
     private String userToSend = null;
     boolean isConnected = true;
-    
+    boolean waitingForResponse = false;
+
     protected Socket clientSocket = null;
     final DataInputStream input;
     final DataOutputStream output;
@@ -52,58 +53,47 @@ public class ConnectionRunnable implements Runnable {
         String recieved;
         String toReturn;
         try {
-            output.writeUTF("CONNECTION STABLISHED" );
+            output.writeUTF("CONNECTION STABLISHED");
             id = input.readUTF();
-
-            System.out.println("\nNew Thread Assigning id:  " + id);
+            System.out.println("Assigning id:  " + id);
             DataHolder.AddConnection(id, this);
             System.out.println(DataHolder.ListConnections());
             output.writeUTF(DataHolder.ListConnections());
-
         } catch (IOException ex) {
             Logger.getLogger(ConnectionRunnable.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        // to know the number of runs
-        int count = 1;
-
         while (isConnected) {
-            // msgs to test
-            System.out.println( "\nThread " + id + " run: " + count);
-            System.out.println("ESTADO: " + this.status);
-
             toReturn = "EMPTY_MESSAGE";
-
             try {
                 recieved = input.readUTF();
-                String[] command = recieved.split(" "); // cambie el puesto de command
-                System.out.println("\nCOMANDOS thread " + id + " run: " + count);
-                for( String c: command){
-                    System.out.println(c);
+                if (message.length() > 0 && status == ConnectionStatus.TO_SERVER) {
+                    toReturn = message;
+                    message = "";
+                    status = ConnectionStatus.TO_CLIENT;
                 }
-                if (status == ConnectionStatus.TO_SERVER) {
-                    //System.out.println(recieved);
-
-                    // msg test
-                    System.out.println("TO_SERVER");
-
+                else if (status == ConnectionStatus.TO_SERVER) {
+                    System.out.println(recieved);
+                    String[] command = recieved.split(" ");
                     switch (command[0]) {
                         case "list":
                             toReturn = DataHolder.ListConnections();
                             break;
                         case "connect":
                             System.out.println("Attempting to connect client with: " + command[1]);
-                            if (DataHolder.IsUserConnected(command[1])) {
+                            if(id.equals(command[1]))
+                            {
+                                toReturn = "You can't connect to yourself";
+                            }
+                            else if (DataHolder.IsUserConnected(command[1])) {
                                 userToSend = command[1];
                                 status = ConnectionStatus.TO_CLIENT;
                                 DataHolder.AddMessagesToQueue(command[1], recieved, id);
+                                synchronized (this) {
+                                    wait();
+                                }
+                                toReturn = message;
 
-                                // msg to test
-                                System.out.println("Mensaje enviado a cliente " + command[1] + " " + recieved );
-
-                                /// aqui iria el wait, pero cuando llama a data holder
-                                
-                                
                             } else {
                                 toReturn = "No user called " + command[1] + " is currently connected";
                             }
@@ -115,39 +105,27 @@ public class ConnectionRunnable implements Runnable {
                             break;
                     }
                 } else {
-
-                    // msg test
-                    System.out.println("TO_CLIENT");
-
                     if (recieved.equals("disconnect")) {
                         toReturn = "Disconnecting from client: " + userToSend + ". Connecting back to Server";
                         status = ConnectionStatus.TO_SERVER;
                         userToSend = null;
                     } else if (DataHolder.AddMessagesToQueue(userToSend, id + ": " + recieved, id)) {
-                        //toReturn = "Message sent correctly";
+                        synchronized (this) {
+                            wait();
+                        }
                         toReturn = message;
-
-                        // msg to test
-                        System.out.println("Mensaje enviado a cliente " + userToSend + " " + recieved );
-
                     } else {
                         //toReturn = "Message could not be sent because user was not connected";
                     }
                 }
-                System.out.println("To return: " + toReturn);
-                output.writeUTF(toReturn);
-
-                /* NO ES NECESARIO, ESTO ESTA DE MAS
+                System.out.println(toReturn);
                 if (status == ConnectionStatus.TO_CLIENT) {
-                    toReturn = message;
                     output.writeUTF(toReturn);
-                    
+
                 } else {
                     output.writeUTF(message);
                     message = "";
                 }
-                */
-
             } catch (IOException ex) {
                 //Logger.getLogger(ConnectionRunnable.class.getName()).log(Level.SEVERE, null, ex);
                 System.err.println("Lost connection with client: " + this.toString() + ", terminating thread and removing from connected list");
@@ -155,9 +133,9 @@ public class ConnectionRunnable implements Runnable {
                     DataHolder.RemoveConnection(id);
                 }
                 isConnected = false;
+            } catch (InterruptedException ex) {
+                Logger.getLogger(ConnectionRunnable.class.getName()).log(Level.SEVERE, null, ex);
             }
-
-            count++;
         }
     }
 
@@ -166,10 +144,11 @@ public class ConnectionRunnable implements Runnable {
         return "Client{" + "id=" + id + ", port=" + port + ", ip=" + ip + '}';
     }
 
-    public void AddMessage(String message, String user) {
-        this.status = ConnectionStatus.TO_CLIENT;
+    public synchronized void AddMessage(String message, String user) {
+        //this.status = ConnectionStatus.TO_CLIENT;
         this.userToSend = user;
         this.message = message;
+        notify();
     }
 
 }

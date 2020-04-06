@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package src.clientsync;
+package clientsync;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -33,38 +33,13 @@ public class ClientSync {
             DataOutputStream dos = new DataOutputStream(s.getOutputStream()); 
       
             // the following loop performs the exchange of 
-            // information between client and client handler
-            int count = 1;
-            String tosend;
-
-            while (true)
-            {
-                if( count == 1 ){ // to react differently first time it receives, "connection stablished"
-                    System.out.println(dis.readUTF());
-
-                    //msgs to test
-                    System.out.println( "Enter your ID:");
-                    System.out.println( "Run number" + " " + count);
-
-
-                    tosend = scn.nextLine();
-                    dos.writeUTF(tosend);
-
-                    // msg to test
-                    System.out.println( "What I sent " + tosend);
-                    System.out.println( "What I received:");
-                    System.out.println(dis.readUTF());
-                }
-                else{
-                    // msg test
-                    System.out.println("\nSecond run, and ahead:");
-
-                    tosend = scn.nextLine();
-                    dos.writeUTF(tosend);
-                    System.out.println(dis.readUTF());
-                }
-
-                count++;
+            // information between client and client handler 
+            while (true)  
+            { 
+                System.out.println(dis.readUTF()); 
+                String tosend = scn.nextLine(); 
+                dos.writeUTF(tosend); 
+                  
             }
             
         }catch(IOException ex)
