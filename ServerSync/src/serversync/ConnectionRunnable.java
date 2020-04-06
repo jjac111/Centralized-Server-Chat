@@ -123,7 +123,7 @@ public class ConnectionRunnable implements Runnable {
                     output.writeUTF(toReturn);
 
                 } else {
-                    output.writeUTF(message);
+                    output.writeUTF(toReturn);
                     message = "";
                 }
             } catch (IOException ex) {
