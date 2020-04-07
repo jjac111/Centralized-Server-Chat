@@ -16,7 +16,7 @@ public class ServerSync {
      */
     public static void main(String[] args) {
         // TODO code application logic here
-        SocketClient socketMaker = new SocketClient(8080);
+        SocketClient socketMaker = new SocketClient(10023);
         new Thread(socketMaker).start();
         
         

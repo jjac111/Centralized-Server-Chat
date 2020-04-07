@@ -26,7 +26,7 @@ public class ClientSync {
         // TODO code application logic here
         Scanner scn = new Scanner(System.in);
         try{
-        Socket s = new Socket("localhost", 8080); 
+        Socket s = new Socket("localhost", 10023); 
       
             // obtaining input and out streams 
             DataInputStream dis = new DataInputStream(s.getInputStream()); 
