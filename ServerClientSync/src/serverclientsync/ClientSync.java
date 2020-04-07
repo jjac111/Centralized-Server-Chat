@@ -3,15 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package src.clientsync;
+package src.serverclientsync;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.Scanner;
+
 
 /**
  *
@@ -30,7 +29,7 @@ public class ClientSync {
       
             // obtaining input and out streams 
             DataInputStream dis = new DataInputStream(s.getInputStream()); 
-            DataOutputStream dos = new DataOutputStream(s.getOutputStream()); 
+            DataOutputStream dos = new DataOutputStream(s.getOutputStream());
       
             // the following loop performs the exchange of 
             // information between client and client handler
@@ -42,26 +41,17 @@ public class ClientSync {
                 if( count == 1 ){ // to react differently first time it receives, "connection stablished"
                     System.out.println(dis.readUTF());
 
-                    //msgs to test
-                    System.out.println( "Enter your ID:");
-                    System.out.println( "Run number" + " " + count);
-
-
                     tosend = scn.nextLine();
                     dos.writeUTF(tosend);
 
-                    // msg to test
-                    System.out.println( "What I sent " + tosend);
-                    System.out.println( "What I received:");
                     System.out.println(dis.readUTF());
                 }
                 else{
-                    // msg test
-                    System.out.println("\nSecond run, and ahead:");
 
-                    tosend = scn.nextLine();
-                    dos.writeUTF(tosend);
-                    System.out.println(dis.readUTF());
+                        tosend = scn.nextLine();
+                        dos.writeUTF(tosend);
+                        System.out.println(dis.readUTF());
+
                 }
 
                 count++;
