@@ -67,7 +67,7 @@ public class ConnectionRunnable implements Runnable {
             toReturn = "EMPTY_MESSAGE";
             try {
                 recieved = input.readUTF();
-                if (message.length() > 0 && status == ConnectionStatus.TO_SERVER) {
+                if (message.length() > 0 && status == ConnectionStatus.TO_SERVER && userToSend != null) {
                     toReturn = message;
                     message = "";
                     status = ConnectionStatus.TO_CLIENT;
@@ -107,6 +107,7 @@ public class ConnectionRunnable implements Runnable {
                 } else {
                     if (recieved.equals("disconnect")) {
                         toReturn = "Disconnecting from client: " + userToSend + ". Connecting back to Server";
+                        DataHolder.DisconnectUsers(userToSend);
                         status = ConnectionStatus.TO_SERVER;
                         userToSend = null;
                     } else if (DataHolder.AddMessagesToQueue(userToSend, id + ": " + recieved, id)) {
@@ -121,14 +122,14 @@ public class ConnectionRunnable implements Runnable {
                 System.out.println(toReturn);
                 if (status == ConnectionStatus.TO_CLIENT) {
                     output.writeUTF(toReturn);
+                    message = "";
 
                 } else {
                     output.writeUTF(toReturn);
-                    message = "";
                 }
             } catch (IOException ex) {
                 //Logger.getLogger(ConnectionRunnable.class.getName()).log(Level.SEVERE, null, ex);
-                System.err.println("Lost connection with client: " + this.toString() + ", terminating thread and removing from connected list");
+                System.err.println("Lost connection with client: " + this.toString() + ", terminating thread and removing from connected list (if id exists)");
                 if (id != null) {
                     DataHolder.RemoveConnection(id);
                 }
@@ -148,6 +149,14 @@ public class ConnectionRunnable implements Runnable {
         //this.status = ConnectionStatus.TO_CLIENT;
         this.userToSend = user;
         this.message = message;
+        notify();
+    }
+    
+    public synchronized void DisconnectFromUser()
+    {
+        message = "disconnect " + id;
+        userToSend = null;
+        status = ConnectionStatus.TO_SERVER;
         notify();
     }
 

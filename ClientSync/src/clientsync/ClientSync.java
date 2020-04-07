@@ -12,15 +12,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.Scanner;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -28,17 +19,12 @@ import java.util.logging.Logger;
  */
 public class ClientSync {
 
-    
     /**
      * @param args the command line arguments
-     * @throws java.lang.Exception
      */
-    public static void main(String[] args) throws Exception{
-        
+    public static void main(String[] args){
+        // TODO code application logic here
         Scanner scn = new Scanner(System.in);
-        
-        
-        
         try{
         Socket s = new Socket("localhost", 8080); 
       
@@ -46,35 +32,12 @@ public class ClientSync {
             DataInputStream dis = new DataInputStream(s.getInputStream()); 
             DataOutputStream dos = new DataOutputStream(s.getOutputStream()); 
       
-            
-            System.out.println(dis.readUTF());
-            
-            String tosend = scn.nextLine(); 
-            dos.writeUTF(tosend); 
-            
             // the following loop performs the exchange of 
-            // information between client and client handler
-            ExecutorService executor = Executors.newFixedThreadPool(1);
+            // information between client and client handler 
             while (true)  
             { 
                 System.out.println(dis.readUTF()); 
-                
-                
-                
-                FutureTask<String> readNextLine = new FutureTask<>(() -> {
-                        return scn.nextLine();
-                    });
-                try {
-                    
-                    executor.execute(readNextLine);
-                    tosend = readNextLine.get(10000, TimeUnit.MILLISECONDS);
-
-                } catch (TimeoutException e) {
-                    tosend = "list";
-                    readNextLine.cancel(true);
-                }
-                
-                
+                String tosend = scn.nextLine(); 
                 dos.writeUTF(tosend); 
                   
             }
@@ -86,9 +49,5 @@ public class ClientSync {
             System.err.println("Closing client");
         }
     }
-    
-    
-
-   
 
 }
