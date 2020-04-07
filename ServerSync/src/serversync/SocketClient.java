@@ -16,7 +16,7 @@ import java.util.logging.Logger;
  * @author Spellkaze
  */
 public class SocketClient implements Runnable{
-    protected int          serverPort   = 8080;
+    protected int          serverPort   = 10023;
     protected ServerSocket serverSocket = null;
     protected boolean      isStopped    = false;
     protected Thread       runningThread= null;
